@@ -6,43 +6,86 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.example.modernandroidkotlinjetpack.model.Store;
+import com.example.modernandroidkotlinjetpack.model.StoreInfo;
+import com.example.modernandroidkotlinjetpack.repository.MaskService;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.moshi.MoshiConverterFactory;
+
 public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        RecyclerView recylerView = findViewById(R.id.recycler_view);
+        RecyclerView recyclerView = findViewById(R.id.recycler_view);
 
-        recylerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
+        recyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
 
-        StoreAdapter adapter = new StoreAdapter();
-        recylerView.setAdapter(adapter);
+        final StoreAdapter adapter = new StoreAdapter();
+        recyclerView.setAdapter(adapter);
 
-        List<Store> items = new ArrayList<>();
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(MaskService.BASE_URL)
+                .addConverterFactory(MoshiConverterFactory.create())
+                .build();
 
-        Store store = new Store();
-        store.setAddr("서울시 서초구 명달로9길 57");
-        store.setName("유내과 약국");
+        MaskService service = retrofit.create(MaskService.class);
 
-        items.add(store);
-        items.add(store);
-        items.add(store);
-        items.add(store);
-        items.add(store);
+        Call<StoreInfo> storeInfoCall = service.fetchStoreInfo();
 
-        adapter.updateItems(items);
+        storeInfoCall.enqueue(new Callback<StoreInfo>() {
+            @Override
+            public void onResponse(Call<StoreInfo> call, Response<StoreInfo> response) {
+                Log.d(TAG, "onResponse: refresh");
+                List<Store> items = response.body().getStores();
+                adapter.updateItems(items);
+                getSupportActionBar().setTitle("마스크 재고 있는곳: " + items.size());
+            }
+
+            @Override
+            public void onFailure(Call<StoreInfo> call, Throwable t) {
+                Log.e(TAG, "onFailure: ", t);
+            }
+        });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.action_refresh:
+                // refresh
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 }
 
