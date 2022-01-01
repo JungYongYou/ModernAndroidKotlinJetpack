@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -21,6 +22,7 @@ import com.example.modernandroidkotlinjetpack.repository.MaskService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -58,7 +60,20 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(Call<StoreInfo> call, Response<StoreInfo> response) {
                 Log.d(TAG, "onResponse: refresh");
                 List<Store> items = response.body().getStores();
-                adapter.updateItems(items);
+
+                // 1. for문 활용
+//                List<Store> result = new ArrayList<>();
+//                for (int i = 0; i < items.size(); i++) {
+//                    Store store = items.get(i);
+//                    if (store.getRemainStat() != null) {
+//                        result.add(store);
+//                    }
+//                }
+//
+//                adapter.updateItems(result);
+
+                // 2. filter 사용
+                adapter.updateItems(items.stream().filter(item -> item.getRemainStat() != null).collect(Collectors.toList()));
                 getSupportActionBar().setTitle("마스크 재고 있는곳: " + items.size());
             }
 
@@ -131,8 +146,38 @@ class StoreAdapter extends RecyclerView.Adapter<StoreAdapter.StoreViewHolder> {
         holder.nameTextView.setText(store.getName());
         holder.addressTextView.setText(store.getAddr());
         holder.distanceTextView.setText("1.0km");
-        holder.remainTextView.setText(store.getRemainStat());
-        holder.countTextView.setText("100개 이상");
+        
+        String remainStat = "충분";
+        String count = "100개 이상";
+        int color = Color.GREEN;
+        switch(store.getRemainStat()) {
+            case "plenty":
+                remainStat = "충분";
+                count = "100개 이상";
+                color = Color.GREEN;
+                break;
+            case "some":
+                remainStat = "여유";
+                count = "30개 이상";
+                color = Color.YELLOW;
+                break;
+            case "few":
+                remainStat = "매진 입박";
+                count = "2개 이상";
+                color = Color.RED;
+                break;
+            case "empty":
+                remainStat = "재고 없음";
+                count = "1개 이하";
+                color = Color.GRAY;
+                break;
+            default:
+        }
+        holder.remainTextView.setText(remainStat);
+        holder.countTextView.setText(count);
+
+        holder.remainTextView.setTextColor(color);
+        holder.countTextView.setTextColor(color);
     }
 
     @Override
