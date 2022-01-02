@@ -19,6 +19,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -104,6 +105,14 @@ public class MainActivity extends AppCompatActivity {
         viewModel.itemLiveData.observe(this, stores -> {
             adapter.updateItems(stores);
             getSupportActionBar().setTitle("마스크 재고 있는 곳: " + stores.size());
+        });
+
+        viewModel.loadingLiveData.observe(this, isLoading -> {
+            if (isLoading) {
+                findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
+            } else {
+                findViewById(R.id.progressBar).setVisibility(View.GONE);
+            }
         });
     }
 
