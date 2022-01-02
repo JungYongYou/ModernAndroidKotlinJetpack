@@ -1,7 +1,7 @@
 
 package com.example.modernandroidkotlinjetpack.model;
 
-public class Store {
+public class Store implements Comparable<Store>{
 
     @com.squareup.moshi.Json(name = "addr")
     private String addr;
@@ -104,4 +104,8 @@ public class Store {
         this.type = type;
     }
 
+    @Override
+    public int compareTo(Store store) {
+        return Double.compare(distance, store.distance);
+    }
 }
