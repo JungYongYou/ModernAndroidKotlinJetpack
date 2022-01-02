@@ -39,7 +39,14 @@ public class MainViewModel extends ViewModel {
             @Override
             public void onResponse(Call<StoreInfo> call, Response<StoreInfo> response) {
                 Log.d(TAG, "onResponse: refresh");
-                List<Store> items = response.body().getStores().stream().filter(item -> item.getRemainStat() != null).collect(Collectors.toList());
+                List<Store> items = response.body().getStores()
+                        .stream().filter(item -> item.getRemainStat() != null)
+                        .collect(Collectors.toList());
+
+                for (Store store: items) {
+                    double distance = LocationDistance.distance(location.getLatitude(), location.getLongitude(), store.getLat(), store.getLng(), "k");
+                    store.setDistance(distance);
+                }
 
                 itemLiveData.postValue(items);
             }
