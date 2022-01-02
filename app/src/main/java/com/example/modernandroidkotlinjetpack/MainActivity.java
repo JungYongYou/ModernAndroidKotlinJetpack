@@ -54,6 +54,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        viewModel = new ViewModelProvider(this).get(MainViewModel.class);
+
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         PermissionListener permissionlistener = new PermissionListener() {
@@ -79,13 +81,17 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("MissingPermission")
     private void performAction() {
         fusedLocationClient.getLastLocation()
-                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        // Got last known location. In some rare situations this can be null.
-                        if (location != null) {
-                            // Logic to handle location object
-                        }
+                .addOnSuccessListener(this, location -> {
+                    // Got last known location. In some rare situations this can be null.
+                    if (location != null) {
+                        Log.d(TAG, "performAction: " + location.getLatitude());
+                        Log.d(TAG, "performAction: " + location.getLongitude());
+
+                        location.setLatitude(37.188078);
+                        location.setLongitude(127.043002);
+
+                        viewModel.location = location;
+                        viewModel.fetchStoreInfo();
                     }
                 });
 
@@ -93,8 +99,6 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
         final StoreAdapter adapter = new StoreAdapter();
         recyclerView.setAdapter(adapter);
-
-        viewModel = new ViewModelProvider(this).get(MainViewModel.class);
 
         // UI 변경 감지 업데이트
         viewModel.itemLiveData.observe(this, stores -> {
